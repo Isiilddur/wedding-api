@@ -1,0 +1,14 @@
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+node_modules/
+# Logs
+npm-debug.log*
+
+# Environment variables
+.env
+#package.json
+package-lock.json
