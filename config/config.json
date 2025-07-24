@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "wedding_user",
+    "password": "wedding_password",
+    "database": "wedding_invitation_db", 
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "port": 3306
+  },
+  "test": {
+    "username": "root",
+    "password": "rootpassword",
+    "database": "database_test",
+    "host": "mysql",
+    "dialect": "mysql",
+    "port": 3306
+  },
+  "production": {
+    "username": "root",
+    "password": "rootpassword",
+    "database": "database_production",
+    "host": "mysql",
+    "dialect": "mysql",
+    "port": 3306
+  }
+}

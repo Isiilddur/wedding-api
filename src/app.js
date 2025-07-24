@@ -1,16 +1,13 @@
 // src/app.js
 const express = require('express');
+const inviteesRouter = require('./routes/invitees.routes').router;
+const errorHandler = require('./middlewares/error.middleware');
 
 const app = express();
 app.use(express.json());
 
-// Contestar algo generico para verificar que la API está funcionando
-app.get('/', (req, res) => {
-  res.send('API is running');
-});
+app.use('/api/invitees', inviteesRouter);
 
-
-// Manejo de errores al final
-
+app.use(errorHandler);
 
 module.exports = app;
