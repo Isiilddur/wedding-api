@@ -30,6 +30,72 @@ exports.sendMessageToOne = async (req, res, next) => {
   }
 };
 
+exports.sendWeddingInvitation = async (req, res, next) => {
+  try {
+    const invitee = await InviteeService.findByPin(req.params.pin);
+    if (!invitee) return res.status(404).json({ error: 'Invitee not found' });
+
+    // Obtener la URL del sitio web desde el body o usar la predeterminada
+    const websiteUrl = req.body.websiteUrl || process.env.WEDDING_WEBSITE_URL || 'https://your-wedding-website.com';
+
+    await WhatsAppService.sendWeddingInvitation(invitee, websiteUrl);
+    await InviteeService.markSent(invitee.id);
+
+    res.json({ 
+      success: true, 
+      message: `Wedding invitation sent to ${invitee.firstName} ${invitee.lastName}`,
+      sentTo: invitee.phone
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.sendWeddingInvitationBulk = async (req, res, next) => {
+  try {
+    const confirmed = req.query.confirmed === 'true';
+    const notSent = req.query.notSent === 'true';
+    
+    const filters = {};
+    if (confirmed !== undefined) filters.isConfirmed = confirmed;
+    if (notSent) filters.invitationSent = false;
+
+    const list = await InviteeService.findAll(filters);
+    
+    if (list.length === 0) {
+      return res.json({ message: 'No invitees found matching the criteria', sentCount: 0 });
+    }
+
+    // Obtener la URL del sitio web desde el body o usar la predeterminada
+    const websiteUrl = req.body.websiteUrl || process.env.WEDDING_WEBSITE_URL || 'https://your-wedding-website.com';
+
+    const results = await Promise.allSettled(
+      list.map(async (invitee) => {
+        try {
+          await WhatsAppService.sendWeddingInvitation(invitee, websiteUrl);
+          await InviteeService.markSent(invitee.id);
+          return { success: true, invitee: `${invitee.firstName} ${invitee.lastName}`, phone: invitee.phone };
+        } catch (error) {
+          return { success: false, invitee: `${invitee.firstName} ${invitee.lastName}`, error: error.message };
+        }
+      })
+    );
+
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success);
+    const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success));
+
+    res.json({ 
+      totalInvitees: list.length,
+      sentCount: successful.length,
+      failedCount: failed.length,
+      successful: successful.map(r => r.value),
+      failed: failed.map(r => r.status === 'fulfilled' ? r.value : { error: r.reason })
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.sendMessageBulk = async (req, res, next) => {
   try {
     const confirmed = req.query.confirmed === 'true';

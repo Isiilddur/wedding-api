@@ -1,5 +1,5 @@
 // src/services/invitee.service.js
-const { Invitee, Event, sequelize } = require('../models');
+const { Invitee, Event, sequelize } = require('../../models');
 const { Op } = require('sequelize');
 
 class InviteeService {
@@ -9,7 +9,7 @@ class InviteeService {
   static async findByPin(pin) {
     return Invitee.findOne({
       where: { pin },
-      include: [{ model: Event, attributes: ['id','name','date','time','location','type'] }]
+      include: [{ model: Event, as: 'event', attributes: ['id','name','date','time','location','type'] }]
     });
   }
 

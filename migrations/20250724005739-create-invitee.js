@@ -43,7 +43,13 @@ module.exports = {
         type: Sequelize.BOOLEAN
       },
       eventId: {
-        type: Sequelize.UUID
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Events',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+    
       },
       createdAt: {
         allowNull: false,

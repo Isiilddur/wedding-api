@@ -4,7 +4,9 @@ const ctrl = require('../controllers/invitees.controller');
 
 router.get('/:pin', ctrl.getByPin);
 router.post('/:pin/send-message', ctrl.sendMessageToOne);
+router.post('/:pin/send-wedding-invitation', ctrl.sendWeddingInvitation);
 router.post('/send-message', ctrl.sendMessageBulk);
+router.post('/send-wedding-invitations', ctrl.sendWeddingInvitationBulk);
 router.patch('/:pin/confirm', ctrl.confirmInvitee);
 
 module.exports = { router };
