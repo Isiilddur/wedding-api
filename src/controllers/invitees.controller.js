@@ -41,10 +41,15 @@ exports.sendWeddingInvitation = async (req, res, next) => {
     await WhatsAppService.sendWeddingInvitation(invitee, websiteUrl);
     await InviteeService.markSent(invitee.id);
 
+    // Formatear el número para mostrar el formato de Twilio en la respuesta
+    const formattedPhone = invitee.phone.startsWith('whatsapp:') 
+      ? invitee.phone 
+      : `whatsapp:${invitee.phone}`;
+
     res.json({ 
       success: true, 
       message: `Wedding invitation sent to ${invitee.firstName} ${invitee.lastName}`,
-      sentTo: invitee.phone
+      sentTo: formattedPhone
     });
   } catch (err) {
     next(err);
@@ -74,7 +79,13 @@ exports.sendWeddingInvitationBulk = async (req, res, next) => {
         try {
           await WhatsAppService.sendWeddingInvitation(invitee, websiteUrl);
           await InviteeService.markSent(invitee.id);
-          return { success: true, invitee: `${invitee.firstName} ${invitee.lastName}`, phone: invitee.phone };
+          
+          // Formatear el número para mostrar el formato de Twilio en la respuesta
+          const formattedPhone = invitee.phone.startsWith('whatsapp:') 
+            ? invitee.phone 
+            : `whatsapp:${invitee.phone}`;
+            
+          return { success: true, invitee: `${invitee.firstName} ${invitee.lastName}`, phone: formattedPhone };
         } catch (error) {
           return { success: false, invitee: `${invitee.firstName} ${invitee.lastName}`, error: error.message };
         }
@@ -117,14 +128,27 @@ exports.sendMessageBulk = async (req, res, next) => {
 
 exports.confirmInvitee = async (req, res, next) => {
   try {
-    const { hasKids, numOfTicketsConfirmed } = req.body;
+    const { hasKids, numOfTicketsConfirmed, numKidsTicketsConfirmed } = req.body;
     const inv = await InviteeService.findByPin(req.params.pin);
     if (!inv) return res.status(404).json({ error: 'Invitee not found' });
 
     const updated = await InviteeService.confirm(inv.id, {
       hasKids,
-      numOfTicketsConfirmed
+      numOfTicketsConfirmed,
+      numKidsTicketsConfirmed
     });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.rejectInvitee = async (req, res, next) => {
+  try {
+    const inv = await InviteeService.findByPin(req.params.pin);
+    if (!inv) return res.status(404).json({ error: 'Invitee not found' });
+
+    const updated = await InviteeService.reject(inv.id);
     res.json(updated);
   } catch (err) {
     next(err);

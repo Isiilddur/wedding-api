@@ -8,5 +8,6 @@ router.post('/:pin/send-wedding-invitation', ctrl.sendWeddingInvitation);
 router.post('/send-message', ctrl.sendMessageBulk);
 router.post('/send-wedding-invitations', ctrl.sendWeddingInvitationBulk);
 router.patch('/:pin/confirm', ctrl.confirmInvitee);
+router.patch('/:pin/reject', ctrl.rejectInvitee);
 
 module.exports = { router };
