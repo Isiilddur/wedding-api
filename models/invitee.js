@@ -24,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     phone: DataTypes.STRING,
     hasKids: DataTypes.BOOLEAN,
     numOfTickets: DataTypes.INTEGER,
+    numKidsTickets: DataTypes.INTEGER,
     isConfirmed: DataTypes.BOOLEAN,
     isRejected: DataTypes.BOOLEAN,
     numOfTicketsConfirmed: DataTypes.INTEGER,

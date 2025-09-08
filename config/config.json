@@ -16,11 +16,12 @@
     "port": 3306
   },
   "production": {
-    "username": "root",
-    "password": "rootpassword",
-    "database": "database_production",
-    "host": "mysql",
-    "dialect": "mysql",
-    "port": 3306
+    "username": "root",     
+    "password": "Gamos.1588",
+    "database": "wedding_invitation_db",
+    "host": "localhost",
+    "port": 3306,
+    "dialect": "mysql"                  
   }
+  
 }
