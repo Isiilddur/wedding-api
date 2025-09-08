@@ -10,4 +10,9 @@ router.post('/send-wedding-invitations', ctrl.sendWeddingInvitationBulk);
 router.patch('/:pin/confirm', ctrl.confirmInvitee);
 router.patch('/:pin/reject', ctrl.rejectInvitee);
 
+// ===== BACKOFFICE ROUTES =====
+router.get('/backoffice/list', ctrl.listInvitees);
+router.get('/backoffice/stats', ctrl.getInviteeStats);
+router.get('/backoffice/summary', ctrl.getInviteeSummary);
+
 module.exports = { router };

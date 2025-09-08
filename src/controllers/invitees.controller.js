@@ -154,3 +154,136 @@ exports.rejectInvitee = async (req, res, next) => {
     next(err);
   }
 };
+
+// ===== BACKOFFICE ENDPOINTS =====
+
+/**
+ * GET /api/invitees/backoffice/list
+ * Lista todos los invitados con filtros opcionales
+ */
+exports.listInvitees = async (req, res, next) => {
+  try {
+    const { 
+      confirmed, 
+      rejected, 
+      sent, 
+      hasKids, 
+      search,
+      page = 1, 
+      limit = 50,
+      sortBy = 'firstName',
+      sortOrder = 'ASC'
+    } = req.query;
+
+    const filters = {};
+    
+    // Aplicar filtros
+    if (confirmed !== undefined) filters.isConfirmed = confirmed === 'true';
+    if (rejected !== undefined) filters.isRejected = rejected === 'true';
+    if (sent !== undefined) filters.invitationSent = sent === 'true';
+    if (hasKids !== undefined) filters.hasKids = hasKids === 'true';
+    
+    const result = await InviteeService.findAllPaginated({
+      filters,
+      search,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sortBy,
+      sortOrder: sortOrder.toUpperCase()
+    });
+
+    res.json({
+      invitees: result.rows,
+      pagination: {
+        total: result.count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(result.count / parseInt(limit))
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/invitees/backoffice/stats
+ * Obtiene estadísticas generales de invitados
+ */
+exports.getInviteeStats = async (req, res, next) => {
+  try {
+    const stats = await InviteeService.getStats();
+    
+    res.json({
+      total: {
+        invitees: stats.totalInvitees,
+        adultTickets: stats.totalAdultTickets,
+        kidsTickets: stats.totalKidsTickets,
+        allTickets: stats.totalAdultTickets + stats.totalKidsTickets
+      },
+      confirmed: {
+        invitees: stats.confirmedInvitees,
+        adultTickets: stats.confirmedAdultTickets,
+        kidsTickets: stats.confirmedKidsTickets,
+        allTickets: stats.confirmedAdultTickets + stats.confirmedKidsTickets
+      },
+      rejected: {
+        invitees: stats.rejectedInvitees
+      },
+      pending: {
+        invitees: stats.totalInvitees - stats.confirmedInvitees - stats.rejectedInvitees,
+        adultTickets: stats.totalAdultTickets - stats.confirmedAdultTickets,
+        kidsTickets: stats.totalKidsTickets - stats.confirmedKidsTickets
+      },
+      invitations: {
+        sent: stats.invitationsSent,
+        pending: stats.totalInvitees - stats.invitationsSent
+      },
+      families: {
+        withKids: stats.familiesWithKids,
+        withoutKids: stats.totalInvitees - stats.familiesWithKids
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/invitees/backoffice/summary
+ * Resumen ejecutivo para dashboard
+ */
+exports.getInviteeSummary = async (req, res, next) => {
+  try {
+    const stats = await InviteeService.getStats();
+    
+    const confirmationRate = stats.totalInvitees > 0 
+      ? Math.round((stats.confirmedInvitees / stats.totalInvitees) * 100) 
+      : 0;
+    
+    const invitationsSentRate = stats.totalInvitees > 0 
+      ? Math.round((stats.invitationsSent / stats.totalInvitees) * 100) 
+      : 0;
+
+    res.json({
+      summary: {
+        totalInvitees: stats.totalInvitees,
+        confirmedInvitees: stats.confirmedInvitees,
+        rejectedInvitees: stats.rejectedInvitees,
+        pendingInvitees: stats.totalInvitees - stats.confirmedInvitees - stats.rejectedInvitees,
+        confirmationRate: `${confirmationRate}%`,
+        invitationsSentRate: `${invitationsSentRate}%`
+      },
+      tickets: {
+        totalAdultTickets: stats.totalAdultTickets,
+        confirmedAdultTickets: stats.confirmedAdultTickets,
+        totalKidsTickets: stats.totalKidsTickets,
+        confirmedKidsTickets: stats.confirmedKidsTickets,
+        totalAllTickets: stats.totalAdultTickets + stats.totalKidsTickets,
+        confirmedAllTickets: stats.confirmedAdultTickets + stats.confirmedKidsTickets
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
