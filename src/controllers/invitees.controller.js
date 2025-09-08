@@ -128,14 +128,16 @@ exports.sendMessageBulk = async (req, res, next) => {
 
 exports.confirmInvitee = async (req, res, next) => {
   try {
-    const { hasKids, numOfTicketsConfirmed, numKidsTicketsConfirmed } = req.body;
+    const { hasKids, numOfTicketsConfirmed, numKidsTicketsConfirmed, email, phone } = req.body;
     const inv = await InviteeService.findByPin(req.params.pin);
     if (!inv) return res.status(404).json({ error: 'Invitee not found' });
 
     const updated = await InviteeService.confirm(inv.id, {
       hasKids,
       numOfTicketsConfirmed,
-      numKidsTicketsConfirmed
+      numKidsTicketsConfirmed,
+      email,
+      phone
     });
     res.json(updated);
   } catch (err) {
@@ -145,10 +147,11 @@ exports.confirmInvitee = async (req, res, next) => {
 
 exports.rejectInvitee = async (req, res, next) => {
   try {
+    const { email, phone } = req.body;
     const inv = await InviteeService.findByPin(req.params.pin);
     if (!inv) return res.status(404).json({ error: 'Invitee not found' });
 
-    const updated = await InviteeService.reject(inv.id);
+    const updated = await InviteeService.reject(inv.id, { email, phone });
     res.json(updated);
   } catch (err) {
     next(err);

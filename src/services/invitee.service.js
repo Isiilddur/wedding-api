@@ -35,9 +35,9 @@ class InviteeService {
   }
 
   /**
-   * Confirm an invitee: set hasKids, numOfTicketsConfirmed and numKidsTicketsConfirmed atomically
+   * Confirm an invitee: set hasKids, numOfTicketsConfirmed, numKidsTicketsConfirmed, email and phone atomically
    */
-  static async confirm(inviteeId, { hasKids, numOfTicketsConfirmed, numKidsTicketsConfirmed = 0 }) {
+  static async confirm(inviteeId, { hasKids, numOfTicketsConfirmed, numKidsTicketsConfirmed = 0, email, phone }) {
     return sequelize.transaction(async t => {
       const inv = await Invitee.findByPk(inviteeId, { transaction: t });
       if (numOfTicketsConfirmed > inv.numOfTickets) {
@@ -50,21 +50,31 @@ class InviteeService {
       inv.numKidsTicketsConfirmed = numKidsTicketsConfirmed;
       inv.isConfirmed = true;
       inv.isRejected = false;
+      
+      // Update email and phone if provided
+      if (email !== undefined) inv.email = email;
+      if (phone !== undefined) inv.phone = phone;
+      
       await inv.save({ transaction: t });
       return inv;
     });
   }
 
   /**
-   * Reject an invitee
+   * Reject an invitee and optionally update email and phone
    */
-  static async reject(inviteeId) {
+  static async reject(inviteeId, { email, phone } = {}) {
     return sequelize.transaction(async t => {
       const inv = await Invitee.findByPk(inviteeId, { transaction: t });
       inv.isRejected = true;
       inv.isConfirmed = false;
       inv.numOfTicketsConfirmed = 0;
       inv.numKidsTicketsConfirmed = 0;
+      
+      // Update email and phone if provided
+      if (email !== undefined) inv.email = email;
+      if (phone !== undefined) inv.phone = phone;
+      
       await inv.save({ transaction: t });
       return inv;
     });
