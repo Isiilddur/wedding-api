@@ -5,18 +5,35 @@ const inviteesRouter = require('./routes/invitees.routes').router;
 
 const app = express();
 
-// CORS middleware - Configure this based on your frontend URL
+// CORS middleware - Improved configuration
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*'); // In production, replace * with your frontend domain
+  // Allow specific origins or all origins for development
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001', 
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://ioanna-y-luis.com',
+    'https://www.ioanna-y-luis.com'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin) || !origin) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
+    res.status(200).end();
+    return;
   }
+  
+  next();
 });
 
 app.use(express.json());
