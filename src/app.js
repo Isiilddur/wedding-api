@@ -5,30 +5,20 @@ const inviteesRouter = require('./routes/invitees.routes').router;
 
 const app = express();
 
-// CORS middleware - Improved configuration
+// CORS middleware - Permissive configuration for debugging
 app.use((req, res, next) => {
-  // Allow specific origins or all origins for development
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:3001', 
-    'http://localhost:5173',
-    'http://localhost:4173',
-    'https://ioanna-y-luis.com',
-    'https://www.ioanna-y-luis.com'
-  ];
+  // Log incoming requests for debugging
+  console.log(`${req.method} ${req.url} from origin: ${req.headers.origin || 'no-origin'}`);
   
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin) || !origin) {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-  }
-  
+  // Allow all origins for now (fix CORS issues)
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.header('Access-Control-Allow-Headers', '*');
+  res.header('Access-Control-Max-Age', '86400');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request');
     res.status(200).end();
     return;
   }
