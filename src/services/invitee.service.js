@@ -2,11 +2,27 @@
 const { Invitee, Event, sequelize } = require('../../models');
 const { Op } = require('sequelize');
 
+const EXCLUDED_PINS = [
+  '4rFm9L', // Israel Vázquez
+  'KfcY6F', // Carlos Jiménez
+  'LhxF8r', // Xóchitl Torres
+  'cO28GD', // Pamela y Fernando
+  'ydB3LE', // Uriel Fernández
+  'cH452j', // María Fernanda Figueroa
+  'JZ3NBS'  // Danahe Ribera
+];
+
+// Helper to always exclude pins
+function excludePins(where = {}) {
+  return { ...where, pin: { [Op.notIn]: EXCLUDED_PINS } };
+}
+
 class InviteeService {
   /**
    * Find a single invitee by PIN (and include its Event if you need)
    */
   static async findByPin(pin) {
+    if (EXCLUDED_PINS.includes(pin)) return null;
     return Invitee.findOne({
       where: { pin },
       include: [{ model: Event, as: 'event', attributes: ['id','name','date','time','location','type'] }]
@@ -18,9 +34,7 @@ class InviteeService {
    * @param {{ isConfirmed?: boolean, invitationSent?: boolean }} filter 
    */
   static async findAll(filter = {}) {
-    const where = {};
-    if (typeof filter.isConfirmed === 'boolean') where.isConfirmed = filter.isConfirmed;
-    if (typeof filter.invitationSent === 'boolean') where.invitationSent = filter.invitationSent;
+    const where = excludePins(filter);
     return Invitee.findAll({ where });
   }
 
@@ -91,9 +105,7 @@ class InviteeService {
    * @param {string} options.sortOrder - Sort order (ASC/DESC)
    */
   static async findAllPaginated({ filters = {}, search, page = 1, limit = 50, sortBy = 'firstName', sortOrder = 'ASC' }) {
-    const where = { ...filters };
-    
-    // Add search functionality
+    const where = excludePins(filters);
     if (search) {
       where[Op.or] = [
         { firstName: { [Op.iLike]: `%${search}%` } },
@@ -102,9 +114,7 @@ class InviteeService {
         { phone: { [Op.iLike]: `%${search}%` } }
       ];
     }
-
     const offset = (page - 1) * limit;
-    
     return Invitee.findAndCountAll({
       where,
       limit,
@@ -122,6 +132,7 @@ class InviteeService {
    * Get comprehensive statistics for backoffice
    */
   static async getStats() {
+    const exclude = excludePins();
     const [
       totalInvitees,
       confirmedInvitees,
@@ -130,22 +141,11 @@ class InviteeService {
       familiesWithKids,
       ticketStats
     ] = await Promise.all([
-      // Total invitees
-      Invitee.count(),
-      
-      // Confirmed invitees
-      Invitee.count({ where: { isConfirmed: true } }),
-      
-      // Rejected invitees
-      Invitee.count({ where: { isRejected: true } }),
-      
-      // Invitations sent
-      Invitee.count({ where: { invitationSent: true } }),
-      
-      // Families with kids
-      Invitee.count({ where: { hasKids: true } }),
-      
-      // Ticket statistics
+      Invitee.count({ where: exclude }),
+      Invitee.count({ where: { ...exclude, isConfirmed: true } }),
+      Invitee.count({ where: { ...exclude, isRejected: true } }),
+      Invitee.count({ where: { ...exclude, invitationSent: true } }),
+      Invitee.count({ where: { ...exclude, hasKids: true } }),
       Invitee.findAll({
         attributes: [
           [sequelize.fn('SUM', sequelize.col('numOfTickets')), 'totalAdultTickets'],
@@ -153,12 +153,11 @@ class InviteeService {
           [sequelize.fn('SUM', sequelize.col('numOfTicketsConfirmed')), 'confirmedAdultTickets'],
           [sequelize.fn('SUM', sequelize.col('numKidsTicketsConfirmed')), 'confirmedKidsTickets']
         ],
+        where: exclude,
         raw: true
       })
     ]);
-
     const stats = ticketStats[0] || {};
-    
     return {
       totalInvitees,
       confirmedInvitees,
