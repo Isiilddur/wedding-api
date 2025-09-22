@@ -22,7 +22,6 @@ class InviteeService {
    * Find a single invitee by PIN (and include its Event if you need)
    */
   static async findByPin(pin) {
-    if (EXCLUDED_PINS.includes(pin)) return null;
     return Invitee.findOne({
       where: { pin },
       include: [{ model: Event, as: 'event', attributes: ['id','name','date','time','location','type'] }]
